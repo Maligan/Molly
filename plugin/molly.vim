@@ -174,11 +174,11 @@ function ExecuteQuery()
     let filesplit = split(n, '/')
     let filename = '/' . get(filesplit, len(filesplit) - 1)
 
-    if filename =~ firstquery
+    if filename =~? firstquery
       call insert(newlist, n, 0)
-    elseif filename =~ secondquery
+    elseif filename =~? secondquery
       call insert(newlist, n, 0)
-    elseif n =~ s:query
+    elseif n =~? s:query
       call add(newlist, n)
     endif
   endfor
