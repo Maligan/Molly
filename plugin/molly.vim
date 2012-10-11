@@ -11,13 +11,13 @@ command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>t :Molly<CR>
 
 let s:query = ""
-let s:bufferOpen = 0
+let s:bufferCreated = 0
 let s:bufferName = '\[Select\ File\]'
 let s:windowHeight = 7
 let s:promt = "/"
 
 function! s:MollyController()
-	if s:bufferOpen
+	if s:bufferCreated
 		call ShowBuffer()
 	else
 		let s:filelist = split(system("find -not -path '*/.*/*' -not -name '.*' -type f", "\n"))
@@ -28,7 +28,7 @@ function! s:MollyController()
 endfunction
 
 function CreateBuffer()
-		let s:bufferOpen = 1
+		let s:bufferCreated = 1
 		call ShowBuffer()
 		call BindKeys()
 		call SetLocals()
