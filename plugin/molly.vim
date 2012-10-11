@@ -12,18 +12,25 @@ silent! nmap <unique> <silent> <Leader>t :Molly<CR>
 
 let s:query = ""
 let s:bufferOpen = 0
+let s:bufferName = '\[Select\ File\]'
+let s:promt = ":"
 
 function! s:MollyController()
 	if s:bufferOpen
 		call ShowBuffer()
 	else
-		let s:bufferOpen = 1
-		execute "sp molly"
-		call BindKeys()
-		call SetLocals()
+		call CreateBuffer()
 		let s:filelist = split(system("find -not -path '*/.*/*' -not -name '.*' -type f", "\n"))
 		call WriteToBuffer(s:filelist)
 	endif
+endfunction
+
+function CreateBuffer()
+		let s:bufferOpen = 1
+		silent! execute ":bot sp " . s:bufferName
+		echo s:promt
+		call BindKeys()
+		call SetLocals()
 endfunction
 
 function BindKeys()
@@ -140,7 +147,7 @@ function HideBuffer()
 endfunction
 
 function ShowBuffer()
-	execute ":sb molly"
+	silent! execute ":bot sb " . s:bufferName
 endfunction
 
 function SetLocals()
