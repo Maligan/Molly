@@ -21,7 +21,7 @@ function! s:MollyController()
 		execute "sp molly"
 		call BindKeys()
 		call SetLocals()
-		let s:filelist = split(globpath(".", "**"), "\n")
+		let s:filelist = split(system("find -not -path '*/.*/*' -not -name '.*' -type f", "\n"))
 		call WriteToBuffer(s:filelist)
 	endif
 endfunction
