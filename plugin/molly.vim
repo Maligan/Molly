@@ -13,6 +13,7 @@ silent! nmap <unique> <silent> <Leader>t :Molly<CR>
 let s:query = ""
 let s:bufferOpen = 0
 let s:bufferName = '\[Select\ File\]'
+let s:windowHeight = 10
 let s:promt = ":"
 
 function! s:MollyController()
@@ -27,10 +28,10 @@ endfunction
 
 function CreateBuffer()
 		let s:bufferOpen = 1
-		silent! execute ":bot sp " . s:bufferName
-		echo s:promt
+		call ShowBuffer()
 		call BindKeys()
 		call SetLocals()
+		echo s:promt
 endfunction
 
 function BindKeys()
@@ -96,8 +97,14 @@ function HandleKeyCursorRight()
 endfunction
 
 function HandleKeyBackspace()
-	let s:query = strpart(s:query, 0, strlen(s:query) - 1)
-	call ExecuteQuery()
+	let querylen = strlen(s:query)
+	if querylen > 0
+		let s:query = strpart(s:query, 0, querylen - 1)
+		call ExecuteQuery()
+	else
+		let s:query = ""
+		call HideBuffer()
+	endif
 endfunction
 
 function HandleKeyCancel()
@@ -147,7 +154,7 @@ function HideBuffer()
 endfunction
 
 function ShowBuffer()
-	silent! execute ":bot sb " . s:bufferName
+	silent! execute ":bot " . s:windowHeight . "sp " . s:bufferName
 endfunction
 
 function SetLocals()
@@ -187,7 +194,7 @@ function ExecuteQuery()
 	call WriteToBuffer(matches)
 	unlet matches
 	unlet querychars
-	echo ":" . s:query
+	echo s:promt . s:query
 endfunction
 
 function WriteToBuffer(files)
