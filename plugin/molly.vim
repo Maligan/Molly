@@ -20,7 +20,7 @@ function! s:MollyController()
 	if s:bufferCreated
 		call ShowBuffer()
 	else
-		echohl MoreMsg | echo "Please wait..." | echohl None
+		echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
 		let s:filelist = split(system("find -not -path '*/.*/*' -not -name '.*' -type f", "\n"))
 		redraw | echo ""
 		call CreateBuffer()
