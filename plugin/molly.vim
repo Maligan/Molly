@@ -179,16 +179,16 @@ function ExecuteQuery()
 	let querychars = split(s:query, '\zs')
 	let fuzzychars = '\.\*'
 	let fuzzyquerry = join(querychars, fuzzychars)
-	let queryfirst = '\V' . '\^' . fuzzyquerry
-	let queryother = '\V' . fuzzychars . fuzzyquerry
+	let queryfirst = '\V\c' . '\^' . fuzzyquerry
+	let queryother = '\V\c' . fuzzychars . fuzzyquerry
 
 	for filepath in s:filelist
 		let filesplit = split(filepath, '/')
 		let filename = get(filesplit, len(filesplit) - 1)
 
-		if filename =~? queryfirst
+		if filename =~ queryfirst
 			call insert(matches, filepath, 0)
-		elseif filename =~? queryother
+		elseif filename =~ queryother
 			call add(matches, filepath)
 		endif
 	endfor
