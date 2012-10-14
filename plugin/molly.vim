@@ -36,13 +36,14 @@ endfunction
 function SearchFiles(path)
 	let found = globpath(a:path, "**")
 	let files = split(found, "\n")
+	" globpath() return dirs too, remove it
 	call filter(files, 'filereadable(v:val)')
 	return files
 endfunction
 
 function CreateBuffer()
 	let s:bufferCreated = 1
-	call ShowBuffer()
+	silent! execute ":bot " . s:windowHeight . "sp " . s:bufferName
 	call BindKeys()
 	call SetLocals()
 endfunction
@@ -167,12 +168,14 @@ function HideBuffer()
 endfunction
 
 function ShowBuffer()
-	silent! execute ":bot " . s:windowHeight . "sp " . s:bufferName
+	" Don't at once (:sp bufferName) because 'sp' set 'buflisted'
+	silent! execute ":botright " . s:windowHeight . "sp"
+	silent! execute ":b " . s:bufferName
 endfunction
 
 function SetLocals()
 	setlocal bufhidden=hide
-	setlocal buftype=nowrite
+	setlocal buftype=nofile
 	setlocal noswapfile
 	setlocal nowrap
 	setlocal nonumber
