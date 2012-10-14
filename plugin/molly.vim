@@ -17,23 +17,34 @@ let s:windowHeight = 7
 let s:promt = "/"
 
 function! s:MollyController()
+	call OpenBuffer()
+	call EchoPromt()
+endfunction
+
+function OpenBuffer()
 	if s:bufferCreated
 		call ShowBuffer()
 	else
 		echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
-		let s:filelist = split(system("find -not -path '*/.*/*' -not -name '.*' -type f", "\n"))
+		let s:filelist = SearchFiles(".")
 		redraw | echo ""
 		call CreateBuffer()
 		call WriteToBuffer(s:filelist)
 	endif
-	echo s:promt
+endfunction
+
+function SearchFiles(path)
+	let found = globpath(a:path, "**")
+	let files = split(found, "\n")
+	call filter(files, 'filereadable(v:val)')
+	return files
 endfunction
 
 function CreateBuffer()
-		let s:bufferCreated = 1
-		call ShowBuffer()
-		call BindKeys()
-		call SetLocals()
+	let s:bufferCreated = 1
+	call ShowBuffer()
+	call BindKeys()
+	call SetLocals()
 endfunction
 
 function BindKeys()
@@ -196,10 +207,14 @@ function ExecuteQuery()
 	call WriteToBuffer(matches)
 	unlet matches
 	unlet querychars
-	echo s:promt . s:query
+	call EchoPromt()
 endfunction
 
 function WriteToBuffer(files)
 	call ClearBuffer()
 	call setline(".", a:files)
+endfunction
+
+function EchoPromt()
+	echo s:promt . s:query
 endfunction
