@@ -12,7 +12,7 @@ silent! nmap <unique> <silent> <Leader>t :Molly<CR>
 
 let s:query = ""
 let s:bufferCreated = 0
-let s:bufferName = '\[Select\ File\]'
+let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 7
 let s:promt = "/"
 
@@ -186,6 +186,7 @@ function SetLocals()
 	setlocal nobuflisted
 	setlocal textwidth=0
 	setlocal cursorline
+	highlight! link CursorLine Search
 endfunction
 
 function ExecuteQuery()
