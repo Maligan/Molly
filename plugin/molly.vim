@@ -5,50 +5,26 @@
 " License:     MIT
 "
 " ============================================================================
-let s:Molly_version = '0.0.3'
 
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
+let s:Molly_version = '0.0.3'
 let s:query = ""
-let s:bufferCreated = 0
-let s:bufferName = '\[Go\ To\ File\]'
+let s:initialized = 0
+let s:bufferName = '[GoToFile]'
 let s:windowHeight = 7
 let s:promt = "/"
+let s:filesCache = []
 
 function! s:MollyController()
-	call OpenBuffer()
-	call EchoPromt()
+	call ShowWindow()
 endfunction
 
-function OpenBuffer()
-	if s:bufferCreated
-		call ShowBuffer()
-	else
-		echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
-		let s:filelist = SearchFiles(".")
-		redraw | echo ""
-		call CreateBuffer()
-		call WriteToBuffer(s:filelist)
-	endif
-endfunction
-
-function SearchFiles(path)
-	let found = globpath(a:path, "**")
-	let files = split(found, "\n")
-	" globpath() return dirs too, remove it
-	call filter(files, 'filereadable(v:val)')
-	return files
-endfunction
-
-function CreateBuffer()
-	let s:bufferCreated = 1
-	silent! execute ":bot " . s:windowHeight . "sp " . s:bufferName
-	call BindKeys()
-	call SetLocals()
-endfunction
-
-function BindKeys()
+"
+" KeyBindings
+"
+function SetBufferKeyBindings()
 	let asciilist = range(97,122)
 	let asciilist = extend(asciilist, range(32,47))
 	let asciilist = extend(asciilist, range(58,90))
@@ -56,28 +32,20 @@ function BindKeys()
 
 	let specialChars = {
 				\  '<BS>'    : 'Backspace',
-				\  '<Del>'   : 'Delete',
-				\  '<CR>'    : 'AcceptSelection',
-				\  '<C-t>'   : 'AcceptSelectionTab',
-				\  '<C-v>'   : 'AcceptSelectionVSplit',
-				\  '<C-CR>'  : 'AcceptSelectionSplit',
-				\  '<C-s>'   : 'AcceptSelectionSplit',
-				\  '<Tab>'   : 'ToggleFocus',
+				\  '<C-h>'   : 'Backspace',
+				\  '<C-u>'   : 'Clear',
+				\  '<C-r>'   : 'Refresh',
 				\  '<C-c>'   : 'Cancel',
 				\  '<Esc>'   : 'Cancel',
-				\  '<C-u>'   : 'Clear',
-				\  '<C-e>'   : 'CursorEnd',
-				\  '<C-a>'   : 'CursorStart',
+				\  '<Tab>'   : 'Cancel',
+				\  '<CR>'    : 'AcceptSelection',
+				\  '<C-y>'   : 'AcceptSelection',
 				\  '<C-n>'   : 'SelectNext',
 				\  '<C-j>'   : 'SelectNext',
 				\  '<Down>'  : 'SelectNext',
 				\  '<C-k>'   : 'SelectPrev',
 				\  '<C-p>'   : 'SelectPrev',
 				\  '<Up>'    : 'SelectPrev',
-				\  '<C-h>'   : 'CursorLeft',
-				\  '<Left>'  : 'CursorLeft',
-				\  '<C-l>'   : 'CursorRight',
-				\  '<Right>' : 'CursorRight'
 				\}
 
 	for n in asciilist
@@ -91,7 +59,12 @@ endfunction
 
 function HandleKey(key)
 	let s:query = s:query . a:key
-	call ExecuteQuery()
+	call RefreshWindow()
+endfunction
+
+function HandleKeyClear()
+	let s:query = ""
+	call RefreshWindow()
 endfunction
 
 function HandleKeySelectNext()
@@ -102,102 +75,110 @@ function HandleKeySelectPrev()
 	call setpos(".", [0, line(".") - 1, 1, 0])
 endfunction
 
-function HandleKeyCursorLeft()
-	echo "left"
-endfunction
-
-function HandleKeyCursorRight()
-	echo "right"
-endfunction
-
 function HandleKeyBackspace()
 	let querylen = strlen(s:query)
 	if querylen > 0
 		let s:query = strpart(s:query, 0, querylen - 1)
-		call ExecuteQuery()
+		call RefreshWindow()
 	else
 		let s:query = ""
-		call HideBuffer()
+		call HideWindow()
 	endif
 endfunction
 
 function HandleKeyCancel()
 	let s:query = ""
-	call HideBuffer()
+	call HideWindow()
 endfunction
 
 function HandleKeyAcceptSelection()
-	let filename = getline(".")
-	call HideBuffer()
-	execute ":e " . filename
-	unlet filename
 	let s:query = ""
+	let selectedFile = getline(".")
+	call HideWindow()
+	execute ":e " . selectedFile
 endfunction
 
-function HandleKeyAcceptSelectionVSplit()
-	let filename = getline(".")
-	call HideBuffer()
-	execute "vs " . filename
-	unlet filename
-	let s:query = ""
+function HandleKeyRefresh()
+	call RefreshCache()
+	call RefreshWindow()
 endfunction
 
-function HandleKeyAcceptSelectionSplit()
-	let filename = getline(".")
-	call HideBuffer()
-	execute "sp " . filename
-	unlet filename
-	let s:query = ""
+"
+" Window function
+"
+function ShowWindow()
+	if s:initialized == 0
+		silent! execute ":bo " . s:windowHeight . "new" . s:bufferName
+		call SetBufferLocals()
+		call SetBufferKeyBindings()
+		let s:initialized = 1
+	else
+		silent! execute ":bo " . s:windowHeight . "sp" 
+		silent! execute ":b ". s:bufferName
+	endif
+
+	call RefreshCache()
+	call RefreshWindow()
+
 endfunction
 
-function HandleKeyAcceptSelectionTab()
-	let filename = getline(".")
-	call HideBuffer()
-	execute "tabnew"
-	execute "e " . filename
-	unlet filename
-	let s:query = ""
+function HideWindow()
+	let number = bufwinnr(s:bufferName)
+	if (number >= 0)
+		execute number . 'wincmd q'
+	endif
 endfunction
 
-function ClearBuffer()
-	execute ":1,$d"
-endfunction
-
-function HideBuffer()
-	execute ":hid"
-endfunction
-
-function ShowBuffer()
-	" Don't at once (:sp bufferName) because 'sp' set 'buflisted'
-	silent! execute ":botright " . s:windowHeight . "sp"
-	silent! execute ":b " . s:bufferName
-endfunction
-
-function SetLocals()
+function SetBufferLocals()
 	setlocal bufhidden=hide
 	setlocal buftype=nofile
 	setlocal noswapfile
+	setlocal nobuflisted
 	setlocal nowrap
 	setlocal nonumber
 	setlocal nolist
-	setlocal foldcolumn=0
-	setlocal foldlevel=99
-	setlocal nospell
-	setlocal nobuflisted
-	setlocal textwidth=0
 	setlocal cursorline
 	highlight! link CursorLine Search
 endfunction
 
-function ExecuteQuery()
+"
+" Refresh
+"
+function RefreshCache()
+	echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
+	let s:filesCache = FileFinder(".")
+	redraw | echo ""
+endfunction
+
+function RefreshWindow()
+	let files = FuzzyFilter(s:filesCache, s:query)
+	let number = bufwinnr(s:bufferName)
+	execute number . 'wincmd w'
+	execute ":1,$d" 
+	call setline(".", files)
+	echo s:promt . s:query
+endfunction
+
+"
+" Utilites
+"
+function FileFinder(path)
+	let found = globpath(a:path, "**")
+	let files = split(found, "\n")
+	" globpath() return dirs too, remove it
+	call filter(files, 'filereadable(v:val)')
+	return files
+endfunction
+
+function FuzzyFilter(files, query)
 	let matches = []
-	let querychars = split(s:query, '\zs')
+	let querychars = split(a:query, '\zs')
 	let fuzzychars = '\.\*'
 	let fuzzyquerry = join(querychars, fuzzychars)
 	let queryfirst = '\V\c' . '\^' . fuzzyquerry
 	let queryother = '\V\c' . fuzzychars . fuzzyquerry
 
-	for filepath in s:filelist
+	for filepath in a:files
 		let filesplit = split(filepath, '/')
 		let filename = get(filesplit, len(filesplit) - 1)
 
@@ -208,17 +189,5 @@ function ExecuteQuery()
 		endif
 	endfor
 
-	call WriteToBuffer(matches)
-	unlet matches
-	unlet querychars
-	call EchoPromt()
-endfunction
-
-function WriteToBuffer(files)
-	call ClearBuffer()
-	call setline(".", a:files)
-endfunction
-
-function EchoPromt()
-	echo s:promt . s:query
+	return matches
 endfunction
