@@ -12,13 +12,18 @@ silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 let s:Molly_version = '0.0.3'
 let s:query = ""
 let s:initialized = 0
-let s:bufferName = '[GoToFile]'
+let s:bufferName = 'GoToFile'
 let s:windowHeight = 7
 let s:promt = "/"
 let s:filesCache = []
 
 function! s:MollyController()
-	call ShowWindow()
+	let number = bufwinnr(s:bufferName)
+	if (number == -1)
+		call ShowWindow()
+	else
+		execute number . 'wincmd w'
+	endif
 endfunction
 
 "
@@ -36,6 +41,7 @@ function SetBufferKeyBindings()
 				\  '<C-u>'   : 'Clear',
 				\  '<C-r>'   : 'Refresh',
 				\  '<C-c>'   : 'Cancel',
+				\  '<C-e>'   : 'Cancel',
 				\  '<Esc>'   : 'Cancel',
 				\  '<Tab>'   : 'Cancel',
 				\  '<CR>'    : 'AcceptSelection',
@@ -77,7 +83,7 @@ endfunction
 
 function HandleKeyBackspace()
 	let querylen = strlen(s:query)
-	if querylen > 0
+	if (querylen > 0)
 		let s:query = strpart(s:query, 0, querylen - 1)
 		call RefreshWindow()
 	else
@@ -107,19 +113,18 @@ endfunction
 " Window function
 "
 function ShowWindow()
-	if s:initialized == 0
-		silent! execute ":bo " . s:windowHeight . "new" . s:bufferName
+	if (s:initialized == 0)
+		silent! execute ":bo " . s:windowHeight . "sp"
+		silent! execute ":e " . s:bufferName
 		call SetBufferLocals()
 		call SetBufferKeyBindings()
+		call RefreshCache()
+		call RefreshWindow()
 		let s:initialized = 1
 	else
-		silent! execute ":bo " . s:windowHeight . "sp" 
-		silent! execute ":b ". s:bufferName
+		silent! execute ":bo " . s:windowHeight . "sp " . s:bufferName
+		echo s:promt . s:query
 	endif
-
-	call RefreshCache()
-	call RefreshWindow()
-
 endfunction
 
 function HideWindow()
