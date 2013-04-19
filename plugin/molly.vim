@@ -12,7 +12,7 @@ silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 let s:Molly_version = '0.0.3'
 let s:query = ""
 let s:initialized = 0
-let s:bufferName = 'GoToFile'
+let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 7
 let s:promt = "/"
 let s:filesCache = []
@@ -27,8 +27,38 @@ function! s:MollyController()
 endfunction
 
 "
-" KeyBindings
+" Window function
 "
+function HideWindow()
+	let number = bufwinnr(s:bufferName)
+	if (number >= 0)
+		execute number . 'wincmd q'
+	endif
+endfunction
+
+function ShowWindow()
+	silent! execute ":bo " . s:windowHeight . "sp" . s:bufferName
+	if (s:initialized == 0)
+		call SetBufferLocals()
+		call SetBufferKeyBindings()
+		call RefreshCache()
+		call RefreshWindow()
+		let s:initialized = 1
+	endif
+endfunction
+
+function SetBufferLocals()
+	setlocal bufhidden=hide
+	setlocal buftype=nofile
+	setlocal noswapfile
+	setlocal nobuflisted
+	setlocal nowrap
+	setlocal nonumber
+	setlocal nolist
+	setlocal cursorline
+	highlight! link CursorLine Search
+endfunction
+
 function SetBufferKeyBindings()
 	let asciilist = range(97,122)
 	let asciilist = extend(asciilist, range(32,47))
@@ -107,43 +137,6 @@ endfunction
 function HandleKeyRefresh()
 	call RefreshCache()
 	call RefreshWindow()
-endfunction
-
-"
-" Window function
-"
-function ShowWindow()
-	if (s:initialized == 0)
-		silent! execute ":bo " . s:windowHeight . "sp"
-		silent! execute ":e " . s:bufferName
-		call SetBufferLocals()
-		call SetBufferKeyBindings()
-		call RefreshCache()
-		call RefreshWindow()
-		let s:initialized = 1
-	else
-		silent! execute ":bo " . s:windowHeight . "sp " . s:bufferName
-		echo s:promt . s:query
-	endif
-endfunction
-
-function HideWindow()
-	let number = bufwinnr(s:bufferName)
-	if (number >= 0)
-		execute number . 'wincmd q'
-	endif
-endfunction
-
-function SetBufferLocals()
-	setlocal bufhidden=hide
-	setlocal buftype=nofile
-	setlocal noswapfile
-	setlocal nobuflisted
-	setlocal nowrap
-	setlocal nonumber
-	setlocal nolist
-	setlocal cursorline
-	highlight! link CursorLine Search
 endfunction
 
 "
