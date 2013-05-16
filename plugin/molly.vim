@@ -169,23 +169,44 @@ function FileFinder(path)
 endfunction
 
 function FuzzyFilter(files, query)
-	let matches = []
+
+	" Basic parts of queries
 	let querychars = split(a:query, '\zs')
 	let fuzzychars = '\.\*'
 	let fuzzyquerry = join(querychars, fuzzychars)
-	let queryfirst = '\V\c' . '\^' . fuzzyquerry
-	let queryother = '\V\c' . fuzzychars . fuzzyquerry
 
+	" Queries by priority (0 - is higth)
+	let queries = []
+	call add(queries, '\V\C' . '\^' . a:query . fuzzychars)
+	call add(queries, '\V\C' . fuzzychars . a:query . fuzzychars)
+	call add(queries, '\V\C' . '\^' . fuzzyquerry)
+	call add(queries, '\V\c' . fuzzychars . fuzzyquerry)
+
+	" Matches by query
+	let matches = {}
+	for query in queries
+		let matches[query] = []
+	endfor
+
+	" Files tests
 	for filepath in a:files
 		let filesplit = split(filepath, '/')
 		let filename = get(filesplit, len(filesplit) - 1)
 
-		if filename =~ queryfirst
-			call insert(matches, filepath, 0)
-		elseif filename =~ queryother
-			call add(matches, filepath)
-		endif
+		for query in queries
+			if (filename =~ query)
+				call add(matches[query], filepath)
+				break
+			endif
+		endfor
+
 	endfor
 
-	return matches
+	" End result
+	let result = []
+	for query in queries
+		let result += matches[query] 
+	endfor
+	return result 
+
 endfunction
