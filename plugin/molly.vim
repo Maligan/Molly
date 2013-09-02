@@ -20,7 +20,7 @@ let s:filesCache = []
 function! s:MollyController()
 	let number = bufwinnr(s:bufferName)
 	if (number == -1)
-		call ShowWindow()
+		call OpenWindow()
 	else
 		execute number . 'wincmd w'
 	endif
@@ -29,21 +29,25 @@ endfunction
 "
 " Window function
 "
-function HideWindow()
+function CloseWindow()
 	let number = bufwinnr(s:bufferName)
 	if (number >= 0)
 		execute number . 'wincmd q'
 	endif
 endfunction
 
-function ShowWindow()
-	silent! execute ":bo " . s:windowHeight . "sp" . s:bufferName
+function OpenWindow()
 	if (s:initialized == 0)
+		silent! execute ":bo " . s:windowHeight . "sp " . s:bufferName
 		call SetBufferLocals()
 		call SetBufferKeyBindings()
 		call RefreshCache()
 		call RefreshWindow()
 		let s:initialized = 1
+	else
+		" Don't at once (:sp bufferName) because 'sp' with arg set 'buflisted'
+		silent! execute ":bo " . s:windowHeight . "sp"
+		silent! execute ":b " . s:bufferName
 	endif
 endfunction
 
@@ -118,19 +122,19 @@ function HandleKeyBackspace()
 		call RefreshWindow()
 	else
 		let s:query = ""
-		call HideWindow()
+		call CloseWindow()
 	endif
 endfunction
 
 function HandleKeyCancel()
 	let s:query = ""
-	call HideWindow()
+	call CloseWindow()
 endfunction
 
 function HandleKeyAcceptSelection()
 	let s:query = ""
 	let selectedFile = getline(".")
-	call HideWindow()
+	call CloseWindow()
 	execute ":e " . selectedFile
 endfunction
 
