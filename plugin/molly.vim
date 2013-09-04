@@ -22,7 +22,7 @@ function! s:MollyController()
 	if (number == -1)
 		call OpenWindow()
 	else
-		execute number . 'wincmd w'
+		call CloseWindow()
 	endif
 endfunction
 
@@ -30,9 +30,13 @@ endfunction
 " Window function
 "
 function CloseWindow()
-	let number = bufwinnr(s:bufferName)
-	if (number >= 0)
-		execute number . 'wincmd q'
+	let currentWinNumber = winnr()
+	let pluginWinNumber = bufwinnr(s:bufferName)
+	if (pluginWinNumber >= 0)
+		execute pluginWinNumber . "wincmd w" 
+		execute pluginWinNumber . "wincmd c" 
+		execute currentWinNumber . "wincmd w" 
+		redraw | echo ""
 	endif
 endfunction
 
@@ -66,7 +70,7 @@ endfunction
 function SetBufferKeyBindings()
 	let asciilist = range(97,122)
 	let asciilist = extend(asciilist, range(32,47))
-	let asciilist = extend(asciilist, range(58,90))
+	let asciilist = extend(asciilist, range(60,90))
 	let asciilist = extend(asciilist, [91,92,93,95,96,123,125,126])
 
 	let specialChars = {
@@ -134,8 +138,11 @@ endfunction
 function HandleKeyAcceptSelection()
 	let s:query = ""
 	let selectedFile = getline(".")
+	execute 'wincmd p'
+	if filereadable(selectedFile)
+		execute ":e " . selectedFile
+	endif
 	call CloseWindow()
-	execute ":e " . selectedFile
 endfunction
 
 function HandleKeyRefresh()
@@ -153,12 +160,14 @@ function RefreshCache()
 endfunction
 
 function RefreshWindow()
-	let files = FuzzyFilter(s:filesCache, s:query)
 	let number = bufwinnr(s:bufferName)
-	execute number . 'wincmd w'
-	execute ":1,$d" 
-	call setline(".", files)
-	echo s:promt . s:query
+	if (number != -1)
+		let files = FuzzyFilter(s:filesCache, s:query)
+		execute number . 'wincmd w'
+		execute ":1,$d" 
+		call setline(".", files)
+		echo s:promt . s:query
+	endif
 endfunction
 
 "
