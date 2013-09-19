@@ -13,7 +13,7 @@ let s:Molly_version = '0.0.3'
 let s:query = ""
 let s:initialized = 0
 let s:bufferName = '\[Go\ To\ File\]'
-let s:windowHeight = 7
+let s:windowHeight = 10 
 let s:promt = "/"
 let s:filesCache = []
 
@@ -56,6 +56,7 @@ function OpenWindow()
 endfunction
 
 function SetBufferLocals()
+	setlocal winfixwidth
 	setlocal bufhidden=hide
 	setlocal buftype=nofile
 	setlocal noswapfile
