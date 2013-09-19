@@ -15,7 +15,7 @@ let s:initialized = 0
 let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 10 
 let s:promt = "/"
-let s:filesCache = []
+let s:filesCache = {}
 
 function! s:MollyController()
 	let number = bufwinnr(s:bufferName)
@@ -156,7 +156,16 @@ endfunction
 "
 function RefreshCache()
 	echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
-	let s:filesCache = FileFinder(".")
+
+	let s:filesCache = {}
+	let filepaths = FileFinder(".")
+
+	for filepath in filepaths
+		let filesplit = split(filepath, '/')
+		let filename = get(filesplit, len(filesplit) - 1)
+		let s:filesCache[filepath] = filename
+	endfor
+
 	redraw | echo ""
 endfunction
 
@@ -191,9 +200,9 @@ function FuzzyFilter(files, query)
 
 	" Queries by priority (0 - is higth)
 	let queries = []
-	call add(queries, '\V\C' . '\^' . a:query . fuzzychars)
-	call add(queries, '\V\C' . fuzzychars . a:query . fuzzychars)
-	call add(queries, '\V\C' . '\^' . fuzzyquerry)
+	call add(queries, '\V\C' . '\^' . toupper(fuzzyquerry))
+	"call add(queries, '\V\C' . '\^' . a:query . fuzzychars)
+	"call add(queries, '\V\C' . fuzzychars . a:query . fuzzychars)
 	call add(queries, '\V\c' . fuzzychars . fuzzyquerry)
 
 	" Matches by query
@@ -203,17 +212,13 @@ function FuzzyFilter(files, query)
 	endfor
 
 	" Files tests
-	for filepath in a:files
-		let filesplit = split(filepath, '/')
-		let filename = get(filesplit, len(filesplit) - 1)
-
+	for filepath in keys(a:files)
 		for query in queries
-			if (filename =~ query)
-				call add(matches[query], filepath)
+			if (a:files[filepath] =~ query)
+				call add(matches[query], a:files[filepath])
 				break
 			endif
 		endfor
-
 	endfor
 
 	" End result
