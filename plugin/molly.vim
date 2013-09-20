@@ -9,9 +9,8 @@
 command -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
-let s:Molly_version = '0.0.3'
+let s:Molly_version = "0.0.3"
 let s:query = ""
-let s:initialized = 0
 let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 10 
 let s:promt = "/"
@@ -30,28 +29,28 @@ endfunction
 " Window function
 "
 function CloseWindow()
-	let currentWinNumber = winnr()
 	let pluginWinNumber = bufwinnr(s:bufferName)
-	if (pluginWinNumber >= 0)
-		execute pluginWinNumber . "wincmd w" 
-		execute pluginWinNumber . "wincmd c" 
-		execute currentWinNumber . "wincmd w" 
+
+	if (pluginWinNumber != -1)
+		let currentWinNumber = winnr()
+		execute pluginWinNumber . "wincmd w"
+		silent! close
+		execute currentWinNumber . "wincmd w"
 		redraw | echo ""
 	endif
 endfunction
 
 function OpenWindow()
-	if (s:initialized == 0)
+	if (bufexists(s:bufferName))
+		" Don't at once (:sp bufferName) because 'sp' with arg set 'buflisted'
+		silent! execute ":bo " . s:windowHeight . "sp"
+		silent! execute ":b " . s:bufferName
+	else
 		silent! execute ":bo " . s:windowHeight . "sp " . s:bufferName
 		call SetBufferLocals()
 		call SetBufferKeyBindings()
 		call RefreshCache()
 		call RefreshWindow()
-		let s:initialized = 1
-	else
-		" Don't at once (:sp bufferName) because 'sp' with arg set 'buflisted'
-		silent! execute ":bo " . s:windowHeight . "sp"
-		silent! execute ":b " . s:bufferName
 	endif
 endfunction
 
@@ -65,6 +64,7 @@ function SetBufferLocals()
 	setlocal nonumber
 	setlocal nolist
 	setlocal cursorline
+	setlocal filetype=qf
 	highlight! link CursorLine Search
 endfunction
 
@@ -155,7 +155,7 @@ endfunction
 " Refresh
 "
 function RefreshCache()
-	echohl MoreMsg | echo "Building List (^c to abort)" | echohl None
+	echo "Search files (^c to abort)"
 
 	let s:filesCache = {}
 	let filepaths = FileFinder(".")
@@ -215,7 +215,7 @@ function FuzzyFilter(files, query)
 	for filepath in keys(a:files)
 		for query in queries
 			if (a:files[filepath] =~ query)
-				call add(matches[query], a:files[filepath])
+				call add(matches[query], substitute(filepath, "^\.\/", "", ""))
 				break
 			endif
 		endfor
