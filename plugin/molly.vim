@@ -11,7 +11,7 @@ silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
 let s:Molly_version = "0.0.3"
 let s:query = ""
-let s:bufferName = "[GoToFile]"
+let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 10 
 let s:promt = "/"
 let s:filesCache = {}
