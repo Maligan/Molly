@@ -11,7 +11,7 @@ silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
 let s:Molly_version = "0.0.3"
 let s:query = ""
-let s:bufferName = '\[Go\ To\ File\]'
+let s:bufferName = 'GoToFile'
 let s:windowHeight = 10 
 let s:promt = "/"
 let s:filesCache = {}
@@ -41,7 +41,7 @@ function CloseWindow()
 endfunction
 
 function OpenWindow()
-	if (bufexists(s:bufferName))
+	if (bufnr(s:bufferName) != -1)
 		" Don't at once (:sp bufferName) because 'sp' with arg set 'buflisted'
 		silent! execute ":bo " . s:windowHeight . "sp"
 		silent! execute ":b " . s:bufferName
@@ -58,6 +58,7 @@ function SetBufferLocals()
 	setlocal winfixwidth
 	setlocal bufhidden=hide
 	setlocal buftype=nofile
+	setlocal hidden
 	setlocal noswapfile
 	setlocal nobuflisted
 	setlocal nowrap
@@ -197,35 +198,24 @@ function FuzzyFilter(files, query)
 	let querychars = split(a:query, '\zs')
 	let fuzzychars = '\.\*'
 	let fuzzyquerry = join(querychars, fuzzychars)
+	let abbrs = split(a:query, '\%(\u\|\<\)\l*\zs') 
+	let abbrsquerry = join(abbrs, fuzzychars)
 
-	" Queries by priority (0 - is higth)
-	let queries = []
-	call add(queries, '\V\C' . '\^' . toupper(fuzzyquerry))
-	"call add(queries, '\V\C' . '\^' . a:query . fuzzychars)
-	"call add(queries, '\V\C' . fuzzychars . a:query . fuzzychars)
-	call add(queries, '\V\c' . fuzzychars . fuzzyquerry)
+	" Query
+	let query = len(abbrs) == 1
+		\ ? '\V\c' . fuzzychars . get(abbrs, 0) . fuzzychars
+		\ : '\V\C' . join(abbrs, fuzzychars)
 
-	" Matches by query
-	let matches = {}
-	for query in queries
-		let matches[query] = []
-	endfor
+	let result = []
 
 	" Files tests
 	for filepath in keys(a:files)
-		for query in queries
-			if (a:files[filepath] =~ query)
-				call add(matches[query], substitute(filepath, "^\.\/", "", ""))
-				break
-			endif
-		endfor
+		if (a:files[filepath] =~ query)
+			call add(result, filepath)
+		endif
 	endfor
 
 	" End result
-	let result = []
-	for query in queries
-		let result += matches[query] 
-	endfor
 	return result 
 
 endfunction
