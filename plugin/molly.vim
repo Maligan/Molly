@@ -11,7 +11,7 @@ silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
 let s:Molly_version = "0.0.3"
 let s:query = ""
-let s:bufferName = 'GoToFile'
+let s:bufferName = "[GoToFile]"
 let s:windowHeight = 10 
 let s:promt = "/"
 let s:filesCache = {}
@@ -173,7 +173,7 @@ endfunction
 function RefreshWindow()
 	let number = bufwinnr(s:bufferName)
 	if (number != -1)
-		let files = FuzzyFilter(s:filesCache, s:query)
+		let files = AbbrFilter(s:filesCache, s:query)
 		execute number . 'wincmd w'
 		execute ":1,$d" 
 		call setline(".", files)
@@ -192,19 +192,16 @@ function FileFinder(path)
 	return files
 endfunction
 
-function FuzzyFilter(files, query)
-
+function AbbrFilter(files, query)
 	" Basic parts of queries
-	let querychars = split(a:query, '\zs')
 	let fuzzychars = '\.\*'
-	let fuzzyquerry = join(querychars, fuzzychars)
-	let abbrs = split(a:query, '\%(\u\|\<\)\l*\zs') 
-	let abbrsquerry = join(abbrs, fuzzychars)
+	let abbrsplit = split(a:query, '\%(\u\|\<\)\l*\zs') 
+	let abbrquery = join(abbrsplit, fuzzychars)
 
 	" Query
-	let query = len(abbrs) == 1
-		\ ? '\V\c' . fuzzychars . get(abbrs, 0) . fuzzychars
-		\ : '\V\C' . join(abbrs, fuzzychars)
+	let query = len(abbrsplit) == 1
+		\ ? '\V\c' . fuzzychars . get(abbrsplit, 0) . fuzzychars
+		\ : '\V\C' . join(abbrsplit, fuzzychars)
 
 	let result = []
 
@@ -217,5 +214,4 @@ function FuzzyFilter(files, query)
 
 	" End result
 	return result 
-
 endfunction
