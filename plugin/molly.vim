@@ -15,6 +15,7 @@ let s:bufferName = '\[Go\ To\ File\]'
 let s:windowHeight = 10 
 let s:promt = "/"
 let s:filesCache = {}
+let s:options = {}
 
 function! s:MollyController()
 	let number = bufwinnr(s:bufferName)
@@ -35,8 +36,10 @@ function CloseWindow()
 		let currentWinNumber = winnr()
 		execute pluginWinNumber . "wincmd w"
 		silent! close
-		execute currentWinNumber . "wincmd w"
-		redraw | echo ""
+		if (currentWinNumber != pluginWinNumber)
+			execute currentWinNumber . "wincmd w"
+			redraw | echo ""
+		endif
 	endif
 endfunction
 
@@ -67,6 +70,25 @@ function SetBufferLocals()
 	setlocal cursorline
 	setlocal filetype=qf
 	highlight! link CursorLine Search
+
+	" This options can't be 'local', need restore after leave buffer
+	autocmd BufEnter <buffer> call SetGlobalOptions("local")
+	autocmd BufLeave <buffer> call SetGlobalOptions("global")
+	call AddGlobalOption("timeout", 1)
+	call AddGlobalOption("timeoutlen", 0)
+endfunction
+
+function AddGlobalOption(name, value)
+	let s:options[a:name] = {}
+	execute "let value=&" . a:name
+	let s:options[a:name]["global"] = value
+	let s:options[a:name]["local"] = a:value
+endfunction
+
+function SetGlobalOptions(type)
+	for key in keys(s:options)
+		execute "let &" . key . "=" . s:options[key][a:type]
+	endfor
 endfunction
 
 function SetBufferKeyBindings()
