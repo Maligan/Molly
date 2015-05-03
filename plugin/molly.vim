@@ -27,9 +27,9 @@ function! s:MollyController()
 endfunction
 
 "
-" Window function
+" Window function!
 "
-function CloseWindow()
+function! CloseWindow()
 	let pluginWinNumber = bufwinnr(s:bufferName)
 
 	if (pluginWinNumber != -1)
@@ -43,7 +43,7 @@ function CloseWindow()
 	endif
 endfunction
 
-function OpenWindow()
+function! OpenWindow()
 	if (bufnr(s:bufferName) != -1)
 		" Don't at once (:sp bufferName) because 'sp' with arg set 'buflisted'
 		silent! execute ":bo " . s:windowHeight . "sp"
@@ -57,7 +57,7 @@ function OpenWindow()
 	endif
 endfunction
 
-function SetBufferLocals()
+function! SetBufferLocals()
 	setlocal winfixwidth
 	setlocal bufhidden=hide
 	setlocal buftype=nofile
@@ -80,20 +80,20 @@ function SetBufferLocals()
 	call SetGlobalOptions("local")
 endfunction
 
-function AddGlobalOption(name, value)
+function! AddGlobalOption(name, value)
 	let s:options[a:name] = {}
 	execute "let value=&" . a:name
 	let s:options[a:name]["global"] = value
 	let s:options[a:name]["local"] = a:value
 endfunction
 
-function SetGlobalOptions(type)
+function! SetGlobalOptions(type)
 	for key in keys(s:options)
 		execute "let &" . key . "=" . s:options[key][a:type]
 	endfor
 endfunction
 
-function SetBufferKeyBindings()
+function! SetBufferKeyBindings()
 	let asciilist = range(97,122)
 	let asciilist = extend(asciilist, range(32,47))
 	let asciilist = extend(asciilist, range(60,90))
@@ -127,25 +127,25 @@ function SetBufferKeyBindings()
 	endfor
 endfunction
 
-function HandleKey(key)
+function! HandleKey(key)
 	let s:query = s:query . a:key
 	call RefreshWindow()
 endfunction
 
-function HandleKeyClear()
+function! HandleKeyClear()
 	let s:query = ""
 	call RefreshWindow()
 endfunction
 
-function HandleKeySelectNext()
+function! HandleKeySelectNext()
 	call setpos(".", [0, line(".") + 1, 1, 0])
 endfunction
 
-function HandleKeySelectPrev()
+function! HandleKeySelectPrev()
 	call setpos(".", [0, line(".") - 1, 1, 0])
 endfunction
 
-function HandleKeyBackspace()
+function! HandleKeyBackspace()
 	let querylen = strlen(s:query)
 	if (querylen > 0)
 		let s:query = strpart(s:query, 0, querylen - 1)
@@ -156,12 +156,12 @@ function HandleKeyBackspace()
 	endif
 endfunction
 
-function HandleKeyCancel()
+function! HandleKeyCancel()
 	let s:query = ""
 	call CloseWindow()
 endfunction
 
-function HandleKeyAcceptSelection()
+function! HandleKeyAcceptSelection()
 	let s:query = ""
 	let selectedFile = getline(".")
 	execute 'wincmd p'
@@ -171,7 +171,7 @@ function HandleKeyAcceptSelection()
 	call CloseWindow()
 endfunction
 
-function HandleKeyRefresh()
+function! HandleKeyRefresh()
 	call RefreshCache()
 	call RefreshWindow()
 endfunction
@@ -179,7 +179,7 @@ endfunction
 "
 " Refresh
 "
-function RefreshCache()
+function! RefreshCache()
 	echo "Search files (^c to abort)"
 
 	let s:filesCache = {}
@@ -194,7 +194,7 @@ function RefreshCache()
 	redraw | echo ""
 endfunction
 
-function RefreshWindow()
+function! RefreshWindow()
 	let number = bufwinnr(s:bufferName)
 	if (number != -1)
 		let files = AbbrFilter(s:filesCache, s:query)
@@ -208,7 +208,7 @@ endfunction
 "
 " Utilites
 "
-function FileFinder(path)
+function! FileFinder(path)
 	let found = globpath(a:path, "**")
 	let files = split(found, "\n")
 	" globpath() return dirs too, remove it
@@ -216,7 +216,7 @@ function FileFinder(path)
 	return files
 endfunction
 
-function AbbrFilter(files, query)
+function! AbbrFilter(files, query)
 	" Basic parts of queries
 	let fuzzychars = '\.\*'
 	let abbrsplit = split(a:query, '\%(\u\|\<\)\l*\zs') 
