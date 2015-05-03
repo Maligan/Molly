@@ -6,7 +6,7 @@
 "
 " ============================================================================
 
-command -nargs=? -complete=dir Molly call <SID>MollyController()
+command! -nargs=? -complete=dir Molly call <SID>MollyController()
 silent! nmap <unique> <silent> <Leader>g :Molly<CR>
 
 let s:Molly_version = "0.0.3"
